@@ -30,4 +30,4 @@
 * 5.消费者和提供者在内存中累计调用次数和调用时间，定时每分钟发送一次统计数据到监控中心
 
 ##### 环境搭建示例（引用CSDN小宝鸽的文章）：
-<a href="http://blog.csdn.net/u013142781/article/details/50387583" target="_blank">[Dubbo分布式服务框架入门（附工程）]</a>
+[Dubbo分布式服务框架入门（附工程）](http://blog.csdn.net/u013142781/article/details/50387583?_blank)
