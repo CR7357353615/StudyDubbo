@@ -63,10 +63,92 @@ EXTENSION_INSTANCES|ConcurrentHashMap<Class<?>, Object>|--
 type|Class<?>|希望加载的扩展点类型
 objectFactory|ExtensionFactory|扩展工厂类
 cachedNames|ConcurrentMap<Class<?>, String>|缓存的扩展接口名
-cachedClasses|Holder<Map<String, Class<?>>>|--
+cachedClasses|Holder<Map<String, Class<?>>>|缓存的扩展类型
 cachedActivates|Map<String, Activate>|--
-cachedInstances|ConcurrentMap<String, Holder<Object>>|缓存的实例
+cachedInstances|ConcurrentMap<String, Holder<Object>>|缓存的Extension实例
 cachedAdaptiveInstance|Holder<Object>|--
 cachedAdaptiveClass|Class<?>|--
 cachedDefaultName|String|缓存默认名称
 cachedWrapperClasses|Set<Class<?>>|--
+
+### 构造方法
+```java
+private ExtensionLoader(Class<?> type) {
+    this.type = type;
+    // 如果扩展类型是ExtensionFactory,那么则设置为null
+    // 这里通过getAdaptiveExtension方法获取一个运行时自适应的扩展类型
+    //(每个Extension只能有一个@Adaptive类型的实现，如果没有dubbo会动态生成一个类)
+    objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
+}
+```
+这里设置了一个objectFactory，这是一个ExtensionFactory类型，作用是加载类的扩展。
+```java
+@SPI
+public interface ExtensionFactory {
+
+    /**
+     * Get extension.
+     *
+     * @param type object type.
+     * @param name object name.
+     * @return object instance.
+     */
+    <T> T getExtension(Class<T> type, String name);
+
+}
+```
+它也被SPI注解，是一个扩展点。
+在com.alibaba.dubbo.common.extension.factory包中有两个ExtensionFactory接口的实现，一个是AdaptiveExtensionFactory，另一个是SpiExtensionFactory.
+![](images/ExtensionFactory实现图.png)
+```java
+@Adaptive
+public class AdaptiveExtensionFactory implements ExtensionFactory {
+```
+```java
+public class SpiExtensionFactory implements ExtensionFactory {
+```
+可以看出，AdaptiveExtensionFactory类上有@Adaptive注解，而SpiExtensionFactory类没有。说明AdaptiveExtensionFactory就是ExtensionFactory的自适应扩展实现。
+
+Dubbo中，每个扩展点最多只有一个自适应扩展实现，如果所有实现类中没有一个带@Adaptive注解，那么Dubbo会动态的生成一个自适应扩展实现。
+
+也就是说所有调用ExtensionFactory调用的地方都是调用了AdaptiveExtensionFactory的实现方法。
+```java
+@Adaptive
+public class AdaptiveExtensionFactory implements ExtensionFactory {
+
+    private final List<ExtensionFactory> factories;
+
+    public AdaptiveExtensionFactory() {
+        ExtensionLoader<ExtensionFactory> loader = ExtensionLoader.getExtensionLoader(ExtensionFactory.class);
+        List<ExtensionFactory> list = new ArrayList<ExtensionFactory>();
+        // 将所有ExtensionFactory实现保存起来
+        for (String name : loader.getSupportedExtensions()) {
+            list.add(loader.getExtension(name));
+        }
+        factories = Collections.unmodifiableList(list);
+    }
+
+    public <T> T getExtension(Class<T> type, String name) {
+    	// 依次遍历各个ExtensionFactory实现的getExtension方法，一旦获取到Extension即返回
+        // 如果遍历完所有的ExtensionFactory实现均无法找到Extension,则返回null
+        for (ExtensionFactory factory : factories) {
+            T extension = factory.getExtension(type, name);
+            if (extension != null) {
+                return extension;
+            }
+        }
+        return null;
+    }
+}
+```
+构造方法中，首先获取ExtensionFactory的ExtensionLoader对象，调用loader的getSupportedExtensions方法获取系统中所有的ExtensionFactory实现，并保存在factories中。
+
+getExtension()方法是通过系统中所有的ExtensionFactory实现获取Extension，一旦获得，立刻返回，如果遍历完还没有Extension，则返回空。
+
+### getExtension()方法
+方法流程：
+
+getExtension(name)</br>
+　　->createExtension(name) #如果缓存cachedInstances中没有实例，需要创建　</br>
+　　　　->getExtensionClasses() #获得所有的扩展类型（在文件中写的）</br>
+　　　　　　->
