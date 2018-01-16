@@ -151,4 +151,11 @@ getExtension()方法是通过系统中所有的ExtensionFactory实现获取Exten
 getExtension(name)</br>
 　　->createExtension(name) #如果缓存cachedInstances中没有实例，需要创建　</br>
 　　　　->getExtensionClasses() #获得所有的扩展类型（在文件中写的）</br>
-　　　　　　->
+　　　　　　　->loadExtensionClasses() #如果缓存cachedClasses中没有类型，需要创建，通过文件获取扩展类</br>
+　　　　　　　　　　->loadFile(extensionClasses, DUBBO_INTERNAL_DIRECTORY) #从"META-INF/dubbo/internal/"中获取</br>
+　　　　　　　　　　->loadFile(extensionClasses, DUBBO_DIRECTORY) #从"META-INF/dubbo/"中获取</br>
+　　　　　　　　　　->loadFile(extensionClasses, SERVICES_DIRECTORY) #从"META-INF/services/"中获取</br>
+　　　　->injectExtension() #扩展点注入 通过instance的set方法截取属性名以及类型，通过objectFactory</br>
+　　　　　　　　　　　　　（ExtensionFactory的getExtension()方法获取扩展点，如果获取到了，通过动态代理执行instance的set方法，得以注入扩展点）</br>
+　　　　->injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance)) #将缓存包装类的扩展点也进行注入</br>
+　　　　->return instance #返回instance
