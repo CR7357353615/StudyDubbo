@@ -156,6 +156,7 @@ getExtension(name)</br>
 　　　　　　　　　　->loadFile(extensionClasses, DUBBO_DIRECTORY) #从"META-INF/dubbo/"中获取</br>
 　　　　　　　　　　->loadFile(extensionClasses, SERVICES_DIRECTORY) #从"META-INF/services/"中获取</br>
 　　　　->injectExtension() #扩展点注入 通过instance的set方法截取属性名以及类型，通过objectFactory</br>
-　　　　　　　　　　　　　（ExtensionFactory的getExtension()方法获取扩展点，如果获取到了，通过动态代理执行instance的set方法，得以注入扩展点）</br>
+　　　　　　　　　　　　　（ExtensionFactory的getExtension()方法获取扩展点，如果获取到了，通过动态代理执行</br>
+　　　　　　　　　　　　　　instance的set方法，得以注入扩展点）</br>
 　　　　->injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance)) #将缓存包装类的扩展点也进行注入</br>
 　　　　->return instance #返回instance
