@@ -3,7 +3,7 @@
 ## 简介
 ExtensionLoader类是根据扩展点名称来对扩展点接口实现进行的一系列操作，如果获取扩展点接口实现实例，适配类实例，更新实现实例等等。
 ### JDK SPI
-在学习ExtensionLoader之前，先了解一下什么是SPI
+在学习ExtensionLoader之前，先了解一下什么是SPI。
 
 SPI的全称是Service Provider Interface。其目的就是为某接口寻找服务实现的机制，有些像IOC的思想，就是将装配的控制权移到程序之外，在模块化设计中这个机制尤其重要。
 
@@ -50,3 +50,23 @@ public class SearchFactory {
     }  
 }
 ```
+
+### ExtensionLoader成员变量
+变量名|值|意义
+--|--|--
+SERVICES_DIRECTORY|META-INF/services/|存放接口实现的文件的位置
+DUBBO_DIRECTORY|META-INF/dubbo/|存放dubbo其他相关文件的位置
+DUBBO_INTERNAL_DIRECTORY|META-INF/dubbo/internal/|dubbo内部文件位置
+NAME_SEPARATOR|\s*[,]+\s*|分割正则表达式
+EXTENSION_LOADERS|ConcurrentMap<Class<?>, ExtensionLoader<?>>|--
+EXTENSION_INSTANCES|ConcurrentHashMap<Class<?>, Object>|--
+type|Class<?>|希望加载的扩展点类型
+objectFactory|ExtensionFactory|扩展工厂类
+cachedNames|ConcurrentMap<Class<?>, String>|缓存的扩展接口名
+cachedClasses|Holder<Map<String, Class<?>>>|--
+cachedActivates|Map<String, Activate>|--
+cachedInstances|ConcurrentMap<String, Holder<Object>>|缓存的实例
+cachedAdaptiveInstance|Holder<Object>|--
+cachedAdaptiveClass|Class<?>|--
+cachedDefaultName|String|缓存默认名称
+cachedWrapperClasses|Set<Class<?>>|--
