@@ -59,17 +59,17 @@ DUBBO_DIRECTORY|META-INF/dubbo/|存放dubbo其他相关文件的位置
 DUBBO_INTERNAL_DIRECTORY|META-INF/dubbo/internal/|dubbo内部文件位置
 NAME_SEPARATOR|\s*[,]+\s*|分割正则表达式
 EXTENSION_LOADERS|ConcurrentMap<Class<?>, ExtensionLoader<?>>|--
-EXTENSION_INSTANCES|ConcurrentHashMap<Class<?>, Object>|--
+EXTENSION_INSTANCES|ConcurrentHashMap<Class<?>, Object>|全局缓存，存放着所有的扩展点实现类型与其对应的已经实例化的实例对象
 type|Class<?>|希望加载的扩展点类型
 objectFactory|ExtensionFactory|扩展工厂类
-cachedNames|ConcurrentMap<Class<?>, String>|缓存的扩展接口名
+cachedNames|ConcurrentMap<Class<?>, String>|扩展点实现类对应的名称(如配置多个名称则值为第一个)
 cachedClasses|Holder<Map<String, Class<?>>>|缓存的扩展类型
-cachedActivates|Map<String, Activate>|--
+cachedActivates|Map<String, Activate>|当前Extension实现自动激活实现缓存(map,无序)
 cachedInstances|ConcurrentMap<String, Holder<Object>>|缓存的Extension实例
 cachedAdaptiveInstance|Holder<Object>|缓存的自适应Extension实例
-cachedAdaptiveClass|Class<?>|缓存的自适应类
-cachedDefaultName|String|缓存默认名称
-cachedWrapperClasses|Set<Class<?>>|用装饰者模式包装Extension的类,wrapper有且只有一个以interface为参数的构造函数
+cachedAdaptiveClass|Class<?>|当前Extension类型对应的AdaptiveExtension类型(只能一个)
+cachedDefaultName|String|缓存默认实现名称
+cachedWrapperClasses|Set<Class<?>>|当前Extension类型对应的所有Wrapper实现类型(无顺序)。用装饰者模式包装Extension的类,wrapper有且只有一个以interface为参数的构造函数
 由Set<Class<?>> cachedWrapperClasses持有其引用
 
 ### 构造方法
@@ -172,3 +172,12 @@ getAdaptiveExtension()</br>
 　　　　　　　　->createAdaptiveExtensionClassCode()  #动态实现实现类Java代码</br>
 　　　　　　　　->compiler.compile(code, classLoader) #动态编译java代码，加载类并实例化返回</br>
 　　　　->injectExtension() #注入instance
+
+### 总结
+* 扩展点和Extension实例是一对一的关系
+* 一个扩展点实现可以对应多个名称（逗号分隔）
+* 对于需要等到运行时才能决定使用哪一个具体实现的扩展点，应获取其自适应扩展点实现
+* @Adapter注解要么注释在扩展点@SPI的方法上，要么注释在其实现类的类定义上
+* 每个扩展点最多只能有一个被AdaptiveExtension
+* 由于每个扩展点实现最多只有一个实例，因此扩展点实现应保证线程安全
+* 如果扩展点有多个Wrapper，name最终其执行的顺序不确定（使用ConcurrentHashSet存储）
