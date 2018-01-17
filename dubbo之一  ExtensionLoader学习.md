@@ -66,10 +66,11 @@ cachedNames|ConcurrentMap<Class<?>, String>|缓存的扩展接口名
 cachedClasses|Holder<Map<String, Class<?>>>|缓存的扩展类型
 cachedActivates|Map<String, Activate>|--
 cachedInstances|ConcurrentMap<String, Holder<Object>>|缓存的Extension实例
-cachedAdaptiveInstance|Holder<Object>|--
-cachedAdaptiveClass|Class<?>|--
+cachedAdaptiveInstance|Holder<Object>|缓存的自适应Extension实例
+cachedAdaptiveClass|Class<?>|缓存的自适应类
 cachedDefaultName|String|缓存默认名称
-cachedWrapperClasses|Set<Class<?>>|--
+cachedWrapperClasses|Set<Class<?>>|用装饰者模式包装Extension的类,wrapper有且只有一个以interface为参数的构造函数
+由Set<Class<?>> cachedWrapperClasses持有其引用
 
 ### 构造方法
 ```java
@@ -160,3 +161,14 @@ getExtension(name)</br>
 　　　　　　　　　　　　　　instance的set方法，得以注入扩展点）</br>
 　　　　->injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance)) #将缓存包装类的扩展点也进行注入</br>
 　　　　->return instance #返回instance
+### getAdaptiveExtension()方法
+方法流程：
+
+getAdaptiveExtension()</br>
+　　->createAdaptiveExtension() #如果缓存cachedAdaptiveInstance中没有自适应实例，则创建</br>
+　　　　->getAdaptiveExtensionClass()  # 获取自适应扩展类</br>
+　　　　　　->getExtensionClasses() #获得所有的扩展类型（在文件中写的）</br>
+　　　　　　->createAdaptiveExtensionClass() #如果没有缓存的自适应类，需要创建一个</br>
+　　　　　　　　->createAdaptiveExtensionClassCode()  #动态实现实现类Java代码</br>
+　　　　　　　　->compiler.compile(code, classLoader) #动态编译java代码，加载类并实例化返回</br>
+　　　　->injectExtension() #注入instance
